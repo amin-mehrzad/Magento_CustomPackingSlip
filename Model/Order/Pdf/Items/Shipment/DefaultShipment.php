@@ -130,6 +130,7 @@ class DefaultShipment extends \Magento\Sales\Model\Order\Pdf\Items\AbstractItems
         $itemId = $item->getData('order_item_id');
 
 
+     // die(json_encode($item->getData()));
         // draw Product name
         if($sku != '106891')
             $lines[0] = [['text' => $this->string->split($item->getName(), 60, true, true), 'feed' => 110]];
@@ -139,13 +140,24 @@ class DefaultShipment extends \Magento\Sales\Model\Order\Pdf\Items\AbstractItems
             $collection = $this->orderItemRepository->getList(
                 $this->searchCriteriaBuilder->create()
             );
-            $productOptions=($collection->getData()[0]['product_options']);
-            $decodedResult=json_decode($productOptions);
+            
+            // die(print_r($collection->getData()[0],true));
+               if(count($collection->getData()) > 0){
+                        $productOptions = ($collection->getData()[0]['product_options']);
+                        $decodedResult = json_decode($productOptions);
+                        $options = $decodedResult->info_buyRequest->options;
+              //  if(count($item->getData('product_options')) > 0) 
+               
+               } else
+                    $options=($item->getData('product_options')['info_buyRequest']['options']);
+
+                   
+            // die(print_r($productOptions,true));
            // die(serialize($decodedResult->info_buyRequest->options));
             // $lines[0] = [['text' => serialize($productOptions),'feed' => 130]];
             $lines[0] = [['text' => $this->string->split($item->getName(), 60, true, true), 'feed' => 110]];
-
-           foreach ($decodedResult->info_buyRequest->options as $option => $optionValue) {
+            $i=1;
+           foreach ($options as $option => $optionValue) {
                 
             switch ($option) {          
             case "28" : $key="Hear Us"; break;  // hear about us
@@ -163,32 +175,26 @@ class DefaultShipment extends \Magento\Sales\Model\Order\Pdf\Items\AbstractItems
 
 
               //  draw options label
-                $lines[][] = [
-                    'text' => $this->string->split($this->filterManager->stripTags($key)." : " .$this->filterManager->stripTags($optionValue), 70, true, true),
-                    'font' => 'italic',
+                $lines[$i][] = [
+                    'text' => $this->string->split($this->filterManager->stripTags($key)." : " , 70, true, true),
+                    'font' => 'bold',
                     'feed' => 120,
                 ];
 
-                // $lines[][] = [
-                //     'text' => $this->string->split($this->filterManager->stripTags($optionValue), 70, true, true),
-                //     'font' => 'italic',
-                //     'feed' => strlen($this->filterManager->stripTags($key))+3,
-                // ];
+                $lines[$i][] = [
+                    'text' => $this->string->split($this->filterManager->stripTags($optionValue), 85, true, true),
+                    'font' => 'italic',
+                    'feed' => strlen($this->filterManager->stripTags($key))*5 +125,
+                ];
+                $i++;
 
-                // draw options value
-                // if ($optionValue !== null) {
-                //     $printValue = isset(
-                //         $option['print_value']
-                //     ) ? $option['print_value'] : $this->filterManager->stripTags(
-                //         $optionValue
-                //     );
-                //     $values = explode(', ', $printValue);
-                //     foreach ($values as $value) {
-                //         $lines[][] = ['text' => $this->string->split($value, 50, true, true), 'feed' => 115];
-                //     }
-                // }
            }
-        }
+            }
+           // else{
+              //  $lines[0] = [['text' => $this->string->split($item->getName(), 60, true, true), 'feed' => 110]];
+
+           // }
+        //}
            
         // draw QTY
         $lines[0][] = ['text' => $item->getQty() * 1, 'feed' => 35];
